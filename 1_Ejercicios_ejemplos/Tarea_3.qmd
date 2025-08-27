@@ -1,0 +1,95 @@
+---
+title: "Tarea 3. Algunos Ejercicios"
+format: html
+editor: visual
+---
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+
+library(tidyverse)
+```
+
+
+
+
+
+```{r}
+#| code-fold: true
+
+calcular_bayes_2 <- function(prior, likelihood_pos, likelihood_neg) {
+  evidence <- likelihood_pos * prior + likelihood_neg * (1 - prior)
+  posterior <- (likelihood_pos * prior) / evidence
+  return(list(
+    evidence = evidence,
+    posterior = posterior,
+    improvement = posterior - prior
+  ))
+}
+```
+
+
+
+
+# Ejercicio 3
+
+Factories A and B produce computers. Factory A produces 2 times as many computers as factory B. The probability that an item produced by factory A is defective is 0.015 and the probability that an item produced by factory B is defective is 0.027. A computer is selected at random and it is found to be defective. What is the probability it came from factory A?
+
+
+## Datos
+
+- $P(A)=2/3$
+- $P(B)=1/3$
+- $P(D|A)=0.015$
+- $P(D|B)=0.027$
+
+
+```{r}
+#| code-fold: true
+
+prob_A <- 2/3
+prob_B <- 1/3
+prob_D_A <- 0.015
+prob_D_B <- 0.027
+
+posterior_prob_A <- (prob_D_A* prob_A)/(prob_D_A* prob_A+prob_D_B* prob_B)
+
+cat("La probabilidad de que se haya producido en la fábrica A dado que fue defectuoso es",  posterior_prob_A)
+
+```
+
+
+```{r}
+ejercicio_3 <- calcular_bayes_2(prob_A, prob_D_A, prob_D_B)
+
+cat("La probabilidad de que se haya producido en la fábrica A dado que fue defectuoso es",  ejercicio_3$posterior)
+```
+
+# Ejercicio 9
+
+Transplant operations have become routine. One common transplant operation is for kidneys. The most dangerous aspect of the procedure is the possibility that the body may reject the new organ. There are several new drugs available for such circumstances and the earlier the drug is administered, the higher the probability of averting rejection. The New England Journal of Medicine recently reported the development of a new urine test to detect early warning signs that the body is rejecting a transplanted kidney. However, like most other tests, the new test is not perfect. In fact, 20% of negative tests and 10% of positive tests prove to be incorrect. Physicians know that in about 30% of kidney transplants the body tries to reject the organ. If the new test has a positive result (indicating early warning of rejection), what is the probability that the body is attempting to reject the kidney?
+
+
+
+```{r}
+#| code-fold: true
+
+# prior probabilidad rechazo
+prob_rechazo <- 0.3
+# likelihood_pos
+prob_pos_rechazo <- 0.8
+# likelihood_neg
+prob_pos_norechazo <- 0.1
+
+
+ejercicio_9 <- calcular_bayes_2(prob_rechazo, prob_pos_rechazo, prob_pos_norechazo)
+
+cat("La probalidad de que se rechace dado que la prueba fue positiva es:",  ejercicio_9$posterior)
+```
+
+
+
+
+
