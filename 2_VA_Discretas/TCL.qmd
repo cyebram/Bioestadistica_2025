@@ -1,0 +1,105 @@
+---
+title: "Teorema Central del Límite (TCL)"
+lang: es
+---
+
+```{=html}
+<style>
+main.content {
+text-align: justify}
+</style>
+```
+
+<br>
+
+El **Teorema Central del Límite** es uno de los resultados más importantes y fundamentales de la teoría de la probabilidad y estadística. Este teorema establece las condiciones bajo las cuales la suma (o media) de variables aleatorias converge a una distribución normal, independientemente de la distribución original de las variables.
+
+::: {#thm-TCL}
+Sea $X_1, X_2, X_3, \ldots$ una sucesión de variables aleatorias **independientes e idénticamente distribuidas** (i.i.d.) con:
+
+-   Media común: $E(X_i) = \mu < \infty$
+-   Varianza común: $\text{Var}(X_i) = \sigma^2 < \infty$
+
+Definamos la suma parcial: $$S_n = X_1 + X_2 + \cdots + X_n$$
+
+Entonces, la **suma estandarizada** converge en distribución a una normal estándar:
+
+$$\frac{S_n - n\mu}{\sigma\sqrt{n}} \xrightarrow{d} N(0,1) \quad \text{cuando } n \to \infty$$
+
+O bien, si definimos la media muestral: $$\bar{X}_n = \frac{S_n}{n} = \frac{1}{n}\sum_{i=1}^{n} X_i$$
+
+Entonces: $$\frac{\bar{X}_n - \mu}{\sigma/\sqrt{n}} \xrightarrow{d} N(0,1) \quad \text{cuando } n \to \infty$$
+
+O equivalentemente: $$\bar{X}_n \xrightarrow{d} N\left(\mu, \frac{\sigma^2}{n}\right) \quad \text{cuando } n \to \infty$$
+
+:::
+
+## Notación
+
+**Convergencia en Distribución**
+
+El símbolo $\xrightarrow{d}$ denota **convergencia en distribución** (también llamada convergencia en ley o convergencia débil), lo que significa:
+
+$$\lim_{n \to \infty} P\left(\frac{S_n - n\mu}{\sigma\sqrt{n}} \leq x\right) = \Phi(x)$$
+
+donde $\Phi(x)$ es la función de distribución (o de probabilidad acumulada) de la distribución normal estándar.
+
+**Parámetros Importantes**
+
+-   $\mu$: Media poblacional de cada $X_i$
+-   $\sigma^2$: Varianza poblacional de cada $X_i$\
+-   $\sigma$: Desviación estándar poblacional
+-   $n$: Tamaño de muestra
+-   $\sigma/\sqrt{n}$: Error estándar de la media muestral
+
+## Condiciones del Teorema
+
+Para que el Teorema Central del Límite se aplique, se requieren las siguientes condiciones:
+
+**1. Independencia**
+
+Las variables aleatorias $X_1, X_2, \ldots, X_n$ deben ser **independientes**. Esto significa que el resultado de una variable no influye en el resultado de las otras.
+
+**2. Distribución Idéntica**\
+Todas las variables deben seguir la **misma distribución**, es decir: $$X_i \sim F \quad \text{para todo } i$$
+
+donde $F$ es alguna distribución de probabilidad.
+
+**3. Momentos Finitos**
+
+La distribución común debe tener:
+
+-   **Media finita**: $E(X_i) = \mu < \infty$
+-   **Varianza finita**: $\text{Var}(X_i) = \sigma^2 < \infty$
+
+**4. Tamaño de Muestra Suficiente**
+
+En la práctica, $n$ debe ser "suficientemente grande". Una **regla práctica común** es $n \geq 30$, aunque esto puede variar según la distribución original.
+
+## Interpretación del Teorema
+
+1.  **Universalidad**: Sin importar cuál sea la distribución original de las $X_i$ (uniforme, exponencial, binomial, etc.), la suma o media se aproxima a una distribución normal.
+
+2.  **Mejora con el tamaño**: La aproximación normal mejora conforme $n$ aumenta.
+
+3.  **Centralización**: La media de la distribución límite es $\mu$ (la media poblacional).
+
+4.  **Reducción de variabilidad**: La varianza de la media muestral es $\sigma^2/n$, que decrece con $n$.
+
+**Formulación Práctica**
+
+Para valores grandes de $n$, podemos escribir aproximadamente: $$S_n \sim N(n\mu, n\sigma^2)$$ $$\bar{X}_n \sim N\left(\mu, \frac{\sigma^2}{n}\right)$$
+
+## Importancia y Aplicaciones
+
+El TCL explica varios fenómenos importantes en estadística:
+
+1.  **Errores de medición**: Tienden a seguir distribución normal
+2.  **Medias muestrales**: Son aproximadamente normales para muestras grandes
+3.  **Tests estadísticos**: Los basados en normalidad funcionan bien con muestras grandes
+4.  **Intervalos de confianza**: Su construcción se basa en el TCL
+
+---
+
+<br>
+
