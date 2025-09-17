@@ -1,0 +1,30 @@
+project:
+  type: book
+
+book:
+  title: "Variables Aleatorias Continuas"
+  author: "Licenciatura en Ciencias Agrogenómicas"
+  chapters:
+    - index.qmd
+    - unif_continua.qmd
+    - exponencial.qmd
+    - gamma.qmd
+    - normal.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme: cosmo
+    grid:
+      sidebar-width: 250px
+      body-width: 950px
+      margin-width: 250px
+      gutter-width: 1.5rem
+    code-fold: true
+    fig-width: 8
+    fig-height: 6
+    fig-align: "center"
+  
+
+
