@@ -9,7 +9,12 @@ book:
     - unif_continua.qmd
     - exponencial.qmd
     - gamma.qmd
+    - beta.qmd
+    #- weibull.qmd Tarea
     - normal.qmd
+    #- ji_cuadrada.qmd 29 de septiembre
+    #- dist_t.qmd 1 de octubre
+    #- dist_f.qmd 1 de octubre
 
 bibliography: references.bib
 

@@ -946,8 +946,85 @@ ggplot(estadisticos_tcl, aes(x = n)) +
 ```
 
 
+## Ejercicios Propuestos
+
+::: {#exr-simulacion_exponencial}
+
+Genera una simulación con tamaños de muestra de 10, 50, 100, 500 y 1000 observaciones de una distribución exponencial con $\lambda = 0.8$. Para cada tamaño de muestra:
+
+1. Calcula la media, varianza y mediana muestral.
+2. Compara estos estadísticos con los valores teóricos.
+3. Grafica la distribución de las muestras junto con la densidad teórica.
+
+```{r}
+
+n_muestras <- seq(from = 100, to = 10000, by = 100)
+lambda_exr <- 0.8
+
+df_exr <- data.frame()
+for (n in n_muestras) {
+  muestra <- rexp(n, rate = lambda_exr)
+  
+  media_muestral <- mean(muestra)
+  varianza_muestral <- var(muestra)
+  mediana_muestral <- median(muestra)
+  
+  df_exr <- rbind(df_exr, data.frame(
+    n = n,
+    media_muestral = media_muestral,
+    varianza_muestral = varianza_muestral,
+    mediana_muestral = mediana_muestral,
+    media_teorica = 1 / lambda_exr,
+    varianza_teorica = 1 / lambda_exr^2,
+    mediana_teorica = log(2) / lambda_exr
+  ))
+}
+```
+
+
+
+```{r}
+ggplot(df_exr)+
+  geom_hline(aes(yintercept=media_teorica), color="red", linetype="dashed", linewidth=1)+
+  geom_line(aes(x=n,y=media_muestral), color="#AFA333", linewidth=1)+
+  theme_bw()
+```
+```{r}
+N <- 1000
+lambda_muestra <- 2.5
+
+muestra_n <- tibble(
+  id_muestra = 1:N,
+  f_x = rexp(N, rate =lambda_muestra)
+)
+
+valores_exp <- tibble(
+  x = seq(0, 3.5, length.out =1000),
+  f_x = dexp(x, rate =lambda_muestra)
+)
+
+ggplot(muestra_n)+
+  geom_histogram(aes(x= f_x, y = after_stat(density)), fill = "#323ADE", alpha =0.5, color="black", boundary= 0)+
+  geom_function(fun = dexp, args = list(rate = lambda_muestra), xlim = c(0,3.5), linewidth = 1.2, color="red")+
+  #geom_line(data = valores_exp, aes(x, f_x), color ="red", linewidth=1.2)+
+  theme_minimal()
+
+
+
+
+
+```
+
+
+
+
 
 :::
+
+
+
+
+
 
 
 

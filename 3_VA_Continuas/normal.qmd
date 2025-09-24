@@ -1178,6 +1178,44 @@ Las ventas mensuales de una tienda siguen $N(50000, 12000^2)$ pesos.
 4. Calcula el rango intercuartílico de las ventas
 5. Si la meta es superar 45,000 pesos, ¿qué porcentaje de meses se cumple?
 
+```{r}
+media_exr <- 50000
+sd_exr <- 12000
+
+ventas_simuladas <- tibble(
+  mes = 1:24,
+  ventas = rnorm(24, mean = media_exr, sd = sd_exr)
+)
+
+ggplot(ventas_simuladas)+
+  geom_histogram(aes(ventas), bins = 15, fill ="#ED3DDD", alpha =0.3, color = "black", center = media_exr)+
+  theme_bw()
+  
+  
+
+
+  
+  
+  
+  
+
+
+```
+```{r}
+cat("Probabilidad ventas > 60000 =", pnorm(60000, media_exr, sd_exr, lower.tail = FALSE) )
+
+ggplot()+
+  geom_function(fun = dnorm, args =list(mean =media_exr, sd = sd_exr), xlim = c(2000, 98000), color ="firebrick", linewidth = 1.2)+
+  stat_function(fun = dnorm, args =list(mean =media_exr, sd = sd_exr), geom = "area", xlim = c(60000, 98000), fill ="olivedrab3", linewidth = 1.2, alpha = 0.5)+
+  annotate(geom ="label", x = 60000, y= 0.00001, label = paste("P(Ventas>60000)=", round(pnorm(60000, media_exr, sd_exr, lower.tail = FALSE),5)))+
+  theme_bw()
+
+
+```
+
+
+
+
 :::
 
 
