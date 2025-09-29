@@ -12,7 +12,7 @@ book:
     - beta.qmd
     #- weibull.qmd Tarea
     - normal.qmd
-    #- ji_cuadrada.qmd 29 de septiembre
+    - ji_cuadrada.qmd
     #- dist_t.qmd 1 de octubre
     #- dist_f.qmd 1 de octubre
 

@@ -38,9 +38,9 @@ set.seed(2024)
 
 Se dice que el vector aleatorio continuo $(X, Y)$ tiene **distribución normal bivariada** con parámetros $\mu_1$, $\mu_2$, $\sigma_1^2$, $\sigma_2^2$, y $\rho$, donde:
 
-- $\mu_1, \mu_2$ son números reales cualesquiera
-- $\sigma_1^2 > 0$, $\sigma_2^2 > 0$ 
-- $-1 < \rho < 1$
+- $E(X)=\mu_1$, $E(Y)=\mu_2$ son números reales cualesquiera
+- $\sigma_1 > 0$, $\sigma_2 > 0$, son respectivamente las desviaciones estándar de $X$ y $Y$ 
+- $-1 < \rho < 1$ es el coeficiente de correlación entre $X$ y $Y$
 
 Su función de densidad de probabilidad está dada por:
 
@@ -313,8 +313,8 @@ for (i in seq_along(casos_ejemplo)) {
                color = "red", size = 3, shape = 16) +
     labs(
       title = nombre,
-      subtitle = paste0("μ₁=", params$mu1, ", μ₂=", params$mu2, 
-                       ", σ₁=", params$sigma1, ", σ₂=", params$sigma2,
+      subtitle = paste0("μ1=", params$mu1, ", μ2=", params$mu2, 
+                       ", σ1=", params$sigma1, ", σ2=", params$sigma2,
                        ", ρ=", params$rho),
       x = "X", y = "Y",
       fill = "Densidad"
