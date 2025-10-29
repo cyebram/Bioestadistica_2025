@@ -1,0 +1,265 @@
+---
+title: "Estimación por intervalos de confianza: ejemplos"
+lang: es
+format:
+  html:
+    toc: false
+    theme: cosmo
+    code-fold: true
+    fig-width: 6
+    fig-height: 4
+    fontsize: 1.1rem
+    grid:
+      sidebar-width: 250px
+      body-width: 950px
+      margin-width: 250px
+      gutter-width: 1.5rem
+---
+
+```{=html}
+<style>
+main.content {
+text-align: justify}
+</style>
+```
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(RColorBrewer)
+```
+
+
+
+
+::: {#exm-inter_conf_1}
+
+## Intervalo para la media cuando la varianza es conocida.
+
+Consideremos una variable aleatoria $X$ con distribución $N(150, 15^2)$ y se generan $N=20$ muestras cada una de tamaño $n=100$. Supongamos que se proporcionan los datos con la varianza conocida $15^2$, pero se omite el valor de la media, que será denotada como el parámetro $\theta$. 
+
+A continuación se construyen y grafican los intervalos de confianza al $95\%$ para el parámetro desconocido.
+
+```{r}
+#| code-fold: true
+#| fig-align: 'center'
+#| fig-width: 8
+#| fig-height: 5
+
+N <- 20
+n <- 100
+alfa <- 0.05
+# confianza 1-alfa
+q_level <- 1-(alfa/2)
+z_crit <- qnorm(q_level)
+
+df_exm1 <- tibble(
+  muestra = rep(1:N, each = n),
+  x = rnorm(N * n, mean = 150, sd = 15)
+)|> 
+  group_by(muestra) |> 
+  summarise(
+    media = mean(x),
+    sd = sd(x),
+    error = z_crit * (15 / sqrt(n)),
+    li = media - error,
+    ls = media + error
+  ) |> 
+  ungroup() |> 
+  mutate(
+    aceptacion = if_else(li <= 150 & ls >= 150, "SI", "NO"),
+    muestra = factor(muestra)
+  )
+
+ggplot(df_exm1, aes(x = muestra, y = media, color = aceptacion)) +
+  geom_errorbar(aes(ymin = li, ymax = ls), width = 0.5, show.legend = FALSE) +
+  geom_point(size = 2, show.legend = FALSE) +
+  geom_hline(yintercept = 150, linetype = "dashed", color = "black") +
+  scale_color_manual(values = c("SI" = "blue", "NO" = "red")) +
+  labs(
+    title = "Intervalos de confianza para la media (varianza conocida)",
+    x = "Muestra",
+    y = "Media muestral con IC del 95%"
+  ) +
+  theme_minimal()
+
+
+```
+
+
+:::
+
+
+
+::: {#exm-inter_conf_2}
+
+## Intervalo para la media cuando la varianza es desconocida.
+
+Como en el ejemplo anterior, consideremos una variable aleatoria $X$ con distribución $N(150, 15^2)$ y se generan $N=20$ muestras cada una de tamaño $n=100$. Supongamos que se proporcionan los datos, pero se omiten el valor de la media y la varianza. En este caso también denotaremos a la media como $\theta$, pues es el parámetro para el cual se estimarán los intervalos de confianza. 
+
+A continuación se construyen y grafican los intervalos de confianza al $95\%$ para la media.
+
+```{r}
+#| code-fold: true
+#| fig-align: 'center'
+#| fig-width: 8
+#| fig-height: 5
+
+
+t_crit <- qt(q_level, df = n - 1)
+
+
+
+df_exm1 <- df_exm1 |> mutate(error_t = t_crit*sd/sqrt(n),
+                  li_t = media - error_t,
+                  ls_t = media + error_t, 
+                  aceptacion_t = if_else(li_t <= 150 & ls_t >= 150, "SI", "NO"))
+
+ggplot(df_exm1, aes(x = muestra, y = media, color = aceptacion)) +
+  geom_errorbar(aes(ymin = li_t, ymax = ls_t), width = 0.5, show.legend = FALSE) +
+  geom_point(size = 2, show.legend = FALSE) +
+  geom_hline(yintercept = 150, linetype = "dashed", color = "black") +
+  scale_color_manual(values = c("SI" = "blue", "NO" = "red")) +
+  labs(
+    title = "Intervalos de confianza para la media (varianza desconocida)",
+    x = "Muestra",
+    y = "Media muestral con IC del 95%"
+  ) +
+  theme_minimal()
+
+
+```
+
+:::
+
+
+::: {#exm-inter_conf_3}
+
+## Intervalo para la varianza
+
+Una vez más, consideremos una variable aleatoria $X$ con distribución $N(150, 15^2)$ y se generan $N=20$ muestras cada una de tamaño $n=100$. Supongamos que se proporcionan los datos, pero se omiten el valor de la media y la varianza. En este caso denotaremos a la varianza como $\theta^2$, pues es el parámetro para el cual se estimarán los intervalos de confianza. 
+
+A continuación se construyen y grafican los intervalos de confianza al $95\%$ para la desviación estándar.
+
+```{r}
+#| code-fold: true
+#| fig-align: 'center'
+#| fig-width: 8
+#| fig-height: 5
+
+N <- 20
+n <- 100
+alfa <- 0.05
+ji_inferior <- qchisq(alfa/2, df = n - 1)
+ji_superior <- qchisq(alfa/2, df = n - 1, lower.tail = FALSE)
+
+
+df_exm1 <- tibble(
+  muestra = rep(1:N, each = n),
+  x = rnorm(N * n, mean = 150, sd = 15)
+) |> 
+  group_by(muestra) |> 
+  summarise(
+    media = mean(x),
+    varianza = var(x),
+    sd = sd(x),
+    li = sqrt((n - 1) * varianza / ji_superior),
+    ls = sqrt((n - 1) * varianza / ji_inferior),
+  ) |> 
+  ungroup() |> 
+  mutate(
+    aceptacion = if_else(li <= 15 & ls >= 15, "SI", "NO"),
+    muestra = factor(muestra)
+  )
+
+ggplot(df_exm1, aes(x = muestra, y = sd, color = aceptacion)) +
+  geom_errorbar(aes(ymin = li, ymax = ls), width = 0.5, show.legend = FALSE) +
+  geom_point(size = 2, show.legend = FALSE) +
+  geom_hline(yintercept = 15, linetype = "dashed", color = "black") +
+  scale_color_manual(values = c("SI" = "blue", "NO" = "red")) +
+  labs(
+    title = "Intervalos de confianza para la desviación estándar",
+    x = "Muestra",
+    y = "SD muestral con IC del 95%"
+  ) +
+  theme_minimal()
+
+
+```
+
+
+:::
+
+::: {#exm-inter_conf_4}
+
+
+## Intervalo para la diferencia de dos medias cuando las varianzas son conocidas.
+
+Consideremos dos variables aleatorias $X$ y $Y$ con distribuciones $N(150, 15^2)$ y $N(130, 10^2)$ respectivamente. Se generan $N=20$ pares de muestras, para $X$ de tamaño $n=100$ y $m=120$ para $Y$. Supongamos que se proporcionan los datos con las varianzas conocidas $15^2$ y $10^2$, pero se omiten los valores de las medias, que serán denotadas como los parámetros $\theta_X$ y $\theta_Y$.
+
+A continuación se construyen y grafican los intervalos de confianza al $95\%$ para la diferencia de medias $\theta_X - \theta_Y$.
+
+
+```{r}
+#| code-fold: true
+#| fig-align: 'center'
+#| fig-width: 8
+#| fig-height: 5
+#| message: false
+
+N <- 20
+n <- 100
+m <- 120
+alfa <- 0.05
+q_level <- 1-(alfa/2)
+z_crit <- qnorm(q_level)
+
+df_exm1 <- tibble(
+  muestra = c(rep(1:N, each = n), rep(1:N, each = m)),
+  grupo = factor(c(rep("X", n*N), rep("Y", m*N))),
+  x = c(rnorm(N * n, mean = 150, sd = 15), rnorm(N * m, mean = 130, sd = 10))
+) |> 
+  group_by(muestra, grupo) |> 
+  summarise(
+    media = mean(x),
+    sd = sd(x),
+    .groups = 'drop'
+  ) |> 
+  pivot_wider(id_cols = muestra, names_from = grupo, values_from = c(media, sd), names_sep = "_") |> 
+  mutate(
+    diff_media = media_X - media_Y,
+    error = z_crit * sqrt((15^2 / n) + (10^2 / m)),
+    li = diff_media - error,
+    ls = diff_media + error,
+    aceptacion = if_else(li <= 20 & ls >= 20, "SI", "NO"),
+    muestra = factor(muestra)
+  ) |> 
+  ungroup()
+
+ggplot(df_exm1, aes(x = muestra, y = diff_media, color = aceptacion)) +
+  geom_errorbar(aes(ymin = li, ymax = ls), width = 0.5, show.legend = FALSE) +
+  geom_point(size = 2, show.legend = FALSE) +
+  geom_hline(yintercept = 20, linetype = "dashed", color = "black") +
+  scale_color_manual(values = c("SI" = "blue", "NO" = "red")) +
+  labs(
+    title = "Intervalos de confianza para la diferencia de medias (varianzas conocidas)",
+    x = "Muestra",
+    y = "Diferencia de medias muestrales con IC del 95%"
+  ) +
+  theme_minimal()
+
+
+```
+
+
+
+
+
+
+
+
