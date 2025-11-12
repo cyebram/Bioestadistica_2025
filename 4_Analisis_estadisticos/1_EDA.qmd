@@ -1,27 +1,8 @@
 ---
 title: "Exploratory Data Analysis"
-lang: es
-format:
-  html:
-    toc: false
-    theme: cosmo
-    code-fold: true
-    fig-width: 6
-    fig-height: 4
-    fontsize: 1.1rem
-    grid:
-      sidebar-width: 250px
-      body-width: 950px
-      margin-width: 250px
-      gutter-width: 1.5rem
+format: html
+editor: visual
 ---
-
-```{=html}
-<style>
-main.content {
-text-align: justify}
-</style>
-```
 
 ```{r}
 #| code-fold: true
@@ -61,4 +42,833 @@ data("penguins")
 datos <- penguins
 head(datos)
 glimpse(datos)
+```
+
+**Variables cualitativas (categóricas o factores):**
+
+**Variables cuantitativas:**
+
+# Resumen estadístico (Preliminar)
+
+```{r}
+#| code-fold: true
+
+summary(datos)
+
+```
+
+## Resumen estadístico (*year factor*)
+
+```{r}
+#| code-fold: true
+
+datos$year_factor <- factor(datos$year)
+summary(datos)
+```
+
+# Distribución de variables cualitativas
+
+## Gráfica de barras
+
+### species
+
+```{r}
+#| code-fold: true
+barplot_species <- ggplot(datos) +
+  geom_bar(aes(species, fill=species), color="black", show.legend = FALSE) +
+  labs(
+    title = "Species",
+    x = "Species", y = "Count",
+    fill = "Species"
+  ) +
+  scale_fill_colorblind()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_species
+
+ggplotly(barplot_species)
+```
+
+### island
+
+```{r}
+#| code-fold: true
+barplot_island <- ggplot(datos) +
+  geom_bar(aes(island, fill=island), color="black", show.legend = FALSE) +
+  labs(
+    title = "Island",
+    x = "Island", y = "Count",
+    fill = "Island"
+  ) +
+  scale_fill_excel_new()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_island
+
+```
+
+### sex
+
+```{r}
+#| code-fold: true
+barplot_sex <- ggplot(datos |> filter(!is.na(sex))) +
+  geom_bar(aes(sex, fill=sex), color="black", show.legend = FALSE) +
+  labs(
+    title = "Sex",
+    x = "Sex", y = "Count",
+    fill = "Sex"
+  ) +
+  scale_fill_colorblind()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_sex
+
+
+```
+
+### year
+
+```{r}
+#| code-fold: true
+barplot_year <- ggplot(datos) +
+  geom_bar(aes(year_factor, fill=year_factor), color="black", show.legend = FALSE) +
+  labs(
+    title = "Year",
+    x = "Year", y = "Count",
+    fill = "Year"
+  ) +
+  scale_fill_economist()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_year
+
+
+```
+
+Posteriormente exploraremos con más detalle las posibles relaciones entre variables categóricas.
+
+```{r}
+#| code-fold: true
+barplot_island_species <- ggplot(datos) +
+  geom_bar(aes(island, fill=species), color="black", show.legend = TRUE) +
+  labs(
+    title = "Island-Species",
+    x = "Island", y = "Count",
+    fill = "Species"
+  ) +
+  scale_fill_colorblind()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_island_species
+
+ggplotly(barplot_island_species)
+```
+
+## Gráfica de sectores (pie chart)
+
+### species
+
+```{r}
+#| code-fold: true
+
+data_species <- datos |> dplyr::select(species) |> group_by(species) |> summarise(Conteo=n())
+data_species <- data_species |> mutate(perc=Conteo/sum(Conteo)*100)
+
+pie_species <- ggplot(data_species, aes(x="", y=perc, fill=species))+
+        geom_bar(width = 1,color="black",  stat = "identity")+
+        coord_polar("y", start=0, direction = 1)+
+        scale_fill_colorblind()+
+        theme_minimal()+
+  theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  axis.text.x = element_blank(),
+  axis.text.y = element_blank(),
+  panel.border = element_blank(),
+  panel.grid=element_blank(),
+  axis.ticks = element_blank(),
+  plot.title=element_text(size=14, face="bold")
+  )
+
+pie_species
+
+```
+
+Usando `plotrix`
+
+```{r}
+#| code-fold: true
+
+pie3D(data_species$Conteo, col= hcl.colors(length(data_species$Conteo), "Spectral"), shade = 0.5, labels= data_species$species)
+```
+
+Usando `tastypie`
+
+```{r}
+#| code-fold: true
+
+pie_bake(data=data_species |> dplyr::select(species, Conteo), template="basic4", perc=TRUE, group_name = "Species")
+```
+
+# Distribución de variables cuantitativas
+
+## Histogramas
+
+```{r}
+#| code-fold: true
+
+
+num_var <- dplyr::select(datos, where(is.numeric), -year) |> names() 
+
+for (hvar in num_var) {
+grafica <- ggplot(datos)+
+      geom_histogram(aes(eval(as.name(hvar)), fill=species), color='gray')+ 
+        labs(x=hvar)+
+        scale_fill_colorblind()+
+        theme_bw()
+        print(grafica)
+        
+}
+
+
+
+```
+
+Elaboramos un histrograma con mayor detalle:
+
+```{r}
+#| code-fold: true
+
+hist_body_mass <- ggplot(datos) +
+  geom_histogram(aes(body_mass_g, fill = species), color="black") +
+  labs(
+    title = "Body mass distribution",
+    x = "Body mass (mm)", y = "Count",
+    fill = "Species"
+  ) +
+  scale_fill_brewer(palette = "Spectral")+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+hist_body_mass
+
+ggplotly(hist_body_mass)
+
+```
+
+## Gráficas de densidad
+
+```{r}
+#| code-fold: true
+
+for (hvar in num_var) {
+  
+
+grafica <- ggplot(datos)+
+      geom_density(aes(eval(as.name(hvar)), fill=species, color=species), alpha=0.4)+
+        labs(x=hvar)+
+        theme_bw()
+        print(grafica)
+        
+        }
+
+```
+
+Elaboramos una gráfica de densidad con mayor detalle:
+
+```{r}
+#| code-fold: true
+
+density_body_mass <- ggplot(datos) +
+  geom_density(aes(body_mass_g, fill=species, color=species), alpha=0.5) +
+  labs(
+    title = "Body mass distribution",
+    x = "Body mass (gr)", y = "Density",
+    fill = "Species", color="Species"
+  ) +
+  scale_fill_manual(values = c("deepskyblue", "gold", "deeppink"))+
+  scale_color_manual(values = c("deepskyblue", "gold", "deeppink"))+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+density_body_mass
+
+#ggplotly(density_body_mass)
+
+```
+
+## Boxplots
+
+```{r}
+#| code-fold: true
+
+
+for (val_y in num_var) {
+  box_graf <- ggplot(datos)+
+    geom_boxplot(aes(x=1, y=eval(as.name(val_y))), show.legend = FALSE)+
+    #geom_jitter(aes(x=species, y=eval(as.name(val_y)) ), color="firebrick", alpha=0.5)+
+    #stat_summary(aes(x=species, y=eval(as.name(val_y))),fun.y=mean, geom="point", shape=20, size=5, color="red", fill="red") +
+    labs(y=val_y)+
+    theme_bw()
+  
+  print(box_graf)
+}
+
+
+
+
+
+```
+
+Otra alternativa:
+
+```{r}
+#| code-fold: true
+
+ggplot(datos)+
+  geom_violin(aes(x=species, y=body_mass_g, fill=species), show.legend = FALSE, draw_quantiles = c(0.25, 0.5, 0.75), color="black")+
+  geom_jitter(aes(x=species, y=body_mass_g), show.legend = FALSE)+
+  theme_bw()
+```
+
+# Identificación de relaciones
+
+## Dos variables numéricas: Diagramas de dispersión (scatterplots)
+
+```{r}
+#| warning: false
+#| code-fold: true
+
+
+
+# Se elaboran todos los scatterplots posibles
+
+scatter_list <- vector("list")
+k <- 1
+j <- 1
+for (val_x in num_var[-length(num_var)]) {
+  k <- k+1
+  for (val_y in num_var[k:length(num_var)]) {
+    
+  scatter_list[[j]] <- ggplot(datos)+
+    geom_point(aes(x = eval(as.name(val_x)), y = eval(as.name(val_y)), color = species)) +
+    geom_smooth(aes(x = eval(as.name(val_x)), y = eval(as.name(val_y)), color=species), method = "lm", show.legend = TRUE) +
+    labs(x = val_x, y = val_y, color = "Species") +
+    scale_color_colorblind()+
+    theme_bw()
+    
+  print(scatter_list[[j]])
+  j <- j+1
+  }
+  
+}
+
+
+
+# ggplot(datos)+
+#   geom_point(aes(x= flipper_length_mm, y = body_mass_g, color=species))+
+#   geom_smooth(aes(x=flipper_length_mm, y=body_mass_g), method = "lm")+
+#   labs(x="Flipper length (mm)", y="Body mass (gr)", color="Species")+
+#   scale_color_colorblind()+
+#   theme_bw()
+
+```
+
+## Correlación
+
+```{r}
+#| code-fold: true
+
+data_num <- select(datos, where(is.numeric), -year)
+data_num <- data_num[complete.cases(data_num), ]  
+cor_mat <- cor(data_num)
+cor_mat
+```
+
+```{r}
+#| code-fold: true
+
+pheatmap(cor_mat)
+corrplot(cor_mat)
+corrplot(cor_mat, method = "color")
+corrplot(cor_mat, method = "color", order = "AOE")
+corrplot(cor_mat, method = "color", order = "FPC", type="lower")
+```
+
+## Relación entre variables categóricas
+
+### Tabla de contingencia
+
+```{r}
+#| code-fold: true
+tableau <- table(datos$island, datos$species)
+
+balloonplot(as.table(tableau),
+            xlab = "Island", ylab = "Species",
+            dotsize = 3/max(strwidth(19), strheight(19)),
+            dotcolor = "skyblue", text.size = 0.65,
+            main = "Tabla de contingencias Island-Species",
+            label = TRUE, label.size = 0.80,
+            # Scale balloons by volume (or diameter)
+            scale.method = c("volume"), scale.range = c("absolute"),
+            # Space for column/row labels
+            colmar = 1, rowmar = 2,
+            # Display zeros if present
+            show.zeros = TRUE,
+            # Display row and column sums
+            show.margins = TRUE,
+            # Display cumulative margins as cascade plots
+            cum.margins = TRUE)      
+
+
+```
+
+### Barplots
+
+```{r}
+#| code-fold: true
+barplot_island_species <- ggplot(datos) +
+  geom_bar(aes(island, fill=species), color="black", show.legend = TRUE) +
+  labs(
+    title = "Island-Species",
+    x = "Island", y = "Count",
+    fill = "Species"
+  ) +
+  scale_fill_colorblind()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_island_species
+
+```
+
+```{r}
+#| code-fold: true
+barplot_island_year <- ggplot(datos) +
+  geom_bar(aes(island, fill=year_factor), color="black", show.legend = TRUE, position = "dodge") +
+  labs(
+    title = "Island-Year",
+    x = "Island", y = "Count",
+    fill = "Year"
+  ) +
+  scale_fill_colorblind()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_island_year
+
+```
+
+```{r}
+#| code-fold: true
+barplot_island_year <- ggplot(datos) +
+  geom_bar(aes(island, fill=year_factor), color="black", show.legend = TRUE, position = "fill") +
+  labs(
+    title = "Island-Year",
+    x = "Island", y = "Proportion",
+    fill = "Year"
+  ) +
+  scale_fill_colorblind()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_island_year
+
+```
+
+
+
+### tile-plot
+
+```{r}
+#| code-fold: true
+
+datos |> group_by(island, species) |> summarise(n=n(), .groups = "drop") |> 
+  ggplot(aes(x=island, y= species))+
+  geom_tile(aes(fill=n))+
+  labs(
+    title = "Species-Island",
+    x = "Island", y = "Species",
+    fill = "Conteo"
+  ) +
+  theme_minimal()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+  
+
+
+
+
+```
+
+### Tres variables categóricas: Barplots con faceting
+
+```{r}
+#| code-fold: true
+barplot_island_year <- ggplot(datos) +
+  geom_bar(aes(island, fill=year_factor), color="black", show.legend = TRUE, position = "dodge") +
+  labs(
+    title = "Island-Year",
+    x = "Island", y = "Count",
+    fill = "Year"
+  ) +
+  facet_wrap(~ sex)+
+  scale_fill_colorblind()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_island_year
+
+```
+
+```{r}
+#| code-fold: true
+barplot_island_species <- ggplot(datos) +
+  geom_bar(aes(island, fill=species), color="black", show.legend = TRUE, position = "fill") +
+  labs(
+    title = "Island-Species",
+    x = "Island", y = "Proportion",
+    fill = "Species"
+  ) +
+  facet_wrap(~ sex)+
+  scale_fill_colorblind()+
+  theme_bw()+
+  theme(
+    #legend.position="top",
+    #legend.position = c(.95, .95),
+    #legend.justification = c("right", "top"),
+    #legend.box.just = "right",
+    legend.title = element_text(size=13, face="bold"),
+    legend.text = element_text(size=13),
+    plot.title = element_text(size=15, face="bold"),
+    plot.subtitle = element_text(size=13),
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12),
+    axis.title.x = element_text(face="bold", size=13),
+    axis.title.y = element_text(face="bold", size=13)
+  )
+
+barplot_island_species
+
+```
+
+### Tres variables categóricas: Alluvialplot
+
+```{r}
+#| code-fold: true
+
+
+datos_alluvia <- datos |> filter(!is.na(sex)) |>  
+  dplyr::select(species, island, sex) |> 
+  group_by(species, island, sex) |> 
+  summarize(frequency = n(), .groups = "drop")
+
+ggplot(datos_alluvia, aes(y = frequency, axis1 = species, axis2 = island, axis3 = sex)) +
+  geom_alluvium(aes(fill = species), width = 1/3, color = "black") +
+  geom_stratum(width = 1/3, fill = "black", color = "grey") +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum)), color = "white", size = 3) +
+  scale_x_discrete(limits = c("Species", "Island", "Sex"), expand = c(.05, .05)) +
+  scale_fill_brewer(type = "qual", palette = "Dark2") + 
+  theme_minimal()
+
+```
+
+## Relación entre variables numéricas y categóricas
+
+Previamente ya habíamos realizado las gráficas de densidad por especie para cada variable numérica.
+
+### Boxplots
+
+```{r}
+#| code-fold: true
+
+
+for (val_y in num_var) {
+  box_graf <- ggplot(datos)+
+    geom_boxplot(aes(x=species, y=eval(as.name(val_y)), color = island), show.legend = TRUE)+
+    #geom_jitter(aes(x=species, y=eval(as.name(val_y)) ), color="firebrick", alpha=0.5)+
+    stat_summary(aes(x=species, y=eval(as.name(val_y))),fun.y=mean, geom="point", shape=20, size=5, color="red", fill="red") +
+    labs(y=val_y)+
+    theme_bw()
+  
+  print(box_graf)
+}
+
+
+
+
+
+```
+
+# Matriz de dispersión
+
+```{r}
+#| code-fold: true
+#| fig-width: 25
+#| fig-height: 25
+
+data_complete <- dplyr::select(datos, species, bill_length_mm:body_mass_g)
+data_complete <- data_complete[complete.cases(data_complete), ]
+
+scatterPlotMatrix(data_complete,categorical =  list(species= c("Adelie",    "Chinstrap", "Gentoo")), zAxisDim = "species")
+```
+
+# Heatmap
+
+```{r}
+#| code-fold: true
+
+
+data_complete <- datos[complete.cases(datos), ]
+data_matrix <- data_complete |> dplyr::select(bill_length_mm:body_mass_g) |> as.matrix()
+dm_dim <- dim(data_matrix)
+rownames(data_matrix) <- paste("ID", 1:dm_dim[1], sep="_")
+
+
+row_annot <- dplyr::select(data_complete, species, island, sex) |> as.data.frame()
+rownames(row_annot) <- paste("ID", 1:dm_dim[1], sep="_")
+
+
+mapa <- pheatmap(data_matrix, 
+         border_color = NA, 
+         scale = "column",
+         clustering_distance_rows = "euclidean", 
+         cutree_rows = 5,
+         treeheight_col=10,
+         clustering_distance_cols = "euclidean", 
+         clustering_method = "ward.D2", 
+         #color= hcl.colors(10, "Spectral"),
+         #breaks = c(-3, 0, 3, 6, 9, 12, 15),
+         drop_levels = TRUE,
+         show_colnames = T, 
+         show_rownames = F,
+         annotation_row = row_annot)
+         
+         #,
+         #annotation_colors = cond_color)
+
+mapa
+
+#ggsave("heatmap_1.jpg", mapa, scale=1, dpi = 320)
+```
+
+# Preliminares para prueba de hipótesis
+
+Calculamos la media de masa corporal por especie.
+
+```{r}
+#| code-fold: true
+
+resumen_mass <- data_complete |> group_by(species) |> summarise(Conteo=n(), Media_masa=mean(body_mass_g), sd_masa=sd(body_mass_g))
+resumen_mass
+
+```
+
+```{r}
+#| code-fold: true
+
+graf_den <- ggplot()+
+  geom_function(fun=dnorm, color="firebrick", args = list(mean = 3733, sd = 385/10), xlim=c(3613,  3853))+
+  stat_function(fun=dnorm, color="firebrick", args = list(mean = 3733, sd = 385/10), xlim=c(3613,  3706), geom="area", fill="olivedrab3")+
+  theme_bw()
+
+
+graf_den
+
+
+pnorm(3706, mean=3733, sd=385/10)
+```
+
+Utilizando Z-values
+
+```{r}
+#| code-fold: true
+
+#mean = 3733, sd = 385/10
+z_value1 <- (3706-3733)/38.5
+
+z_value1
+
+
+graf_den <- ggplot()+
+  geom_function(fun=dnorm, color="firebrick", args = list(mean = 0, sd = 1), xlim=c(-3,  3))+
+  stat_function(fun=dnorm, color="firebrick", args = list(mean = 0, sd = 1), xlim=c(-3,  z_value1), geom="area", fill="olivedrab3")+
+  stat_function(fun=dnorm, color="firebrick", args = list(mean = 0, sd = 1), xlim=c(-1*z_value1, 3), geom="area", fill="olivedrab3")+
+  theme_bw()
+
+
+graf_den
+```
+
+T test con masa especie Adelie
+
+```{r}
+#| code-fold: true
+
+data_Adelie <- data_complete |> filter(species=="Adelie")
+
+t.test(data_Adelie$body_mass_g, mu=3733)
+
+
+pt(-0.70703, 145)*2
 ```
