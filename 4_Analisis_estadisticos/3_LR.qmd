@@ -1,0 +1,319 @@
+---
+title: "Regresión Lineal"
+format: 
+  html:
+    grid: 
+      body-width: 1000px
+editor: visual
+---
+
+```{=html}
+<style>
+main.content {
+text-align: justify}
+</style>
+```
+
+
+```{r}
+#| code-fold: true
+#| label: load-packages
+#| warning: false
+#| message: false
+
+
+library(tidyverse)
+library(palmerpenguins)
+library(RColorBrewer)
+library(multcomp)
+
+library(agricolae)
+library(rgl)
+library(car)
+library(lmtest)
+knitr::knit_hooks$set(webgl = hook_webgl)
+
+```
+
+# Importar datos y filtrar casos completos.
+
+```{r}
+#| code-fold: true
+
+data("penguins")
+datos <- penguins
+datos <- datos[complete.cases(datos), ]
+glimpse(datos)
+```
+
+
+
+# Regresión lineal simple
+
+Consideremos como variable de respuesta `body_mass_g` y como predictor a `flipper_length_mm`.
+
+```{r}
+#| code-fold: true
+#| fig-width: 7
+#| fig-height: 5
+#| fig.align: "center"
+
+
+ggplot(datos)+
+    geom_point(aes(x = flipper_length_mm, y = body_mass_g, color = species)) +
+    geom_smooth(aes(x = flipper_length_mm, y = body_mass_g), method = "lm") +
+    #labs(x = val_x, y = val_y, color = "Species") +
+    scale_color_brewer(palette = "Dark2") +
+    labs(x= "Longitud de aletas (mm)", y= "Masa corporal (g)")+
+    theme_bw()+
+  theme(
+    axis.text.x = element_text(size=12),
+    axis.title.x = element_text(size=13),
+    axis.text.y = element_text(size=12),
+    axis.title.y = element_text(size=13)
+  )
+```
+
+Estimaremos el modelo de regresión lineal simple de la forma
+$$y_i = \beta_0 + \beta_1 x_i + \epsilon_i$$
+donde $y_i$ es la masa corporal (`body_mass_g`), $x_i$ es la longitud de aletas (`flipper_length_mm`), $\beta_0$ es la ordenada al origen, $\beta_1$ es la pendiente y $\epsilon_i$ es el error aleatorio asociado a la observación $i$.
+
+El valor estimado de $\beta_1$ está dado por
+$$\hat{\beta_1} = \frac{\sum_{i=1}^{n} (x_i - \overline{x})(y_i - \overline{y})}{\sum_{i=1}^{n} (x_i - \overline{x})^2}= \frac{S_{xy}}{S_{xx}}$$
+
+donde $S_{xy}$ es la covarianza muestral entre $x$ e $y$ multiplicada por $n-1$ y $S_{xx}$ es la varianza muestral de $x$ multiplicada por $n-1$.
+
+El valor estimado de $\beta_0$ está dado por
+$$\hat{\beta_0} = \overline{y} - \hat{\beta_1} \overline{x}$$
+
+## Cálculo de los coeficientes
+
+```{r}
+#| code-fold: true
+
+beta_1 <- cov(datos$flipper_length_mm, datos$body_mass_g)/var(datos$flipper_length_mm)
+cat("Estimador de la pendiente β1 =", round(beta_1,5), "\n")
+beta_0 <- mean(datos$body_mass_g)- beta_1*mean(datos$flipper_length_mm)
+cat("Estimador de la ordenada al origen β0 =", round(beta_0,5), "\n")
+```
+
+
+## Cálculo de las estadísticas asociadas al modelo
+
+Calculamos la suma del cuadrado de los residuos ($RSS$)
+
+```{r}
+#| code-fold: true
+
+datos <- datos |> 
+  mutate(y_hat = beta_0 + beta_1*flipper_length_mm,
+         residuo = body_mass_g - y_hat,
+         residuo_cuadrado = residuo^2)
+
+RSS <- sum(datos$residuo_cuadrado)
+cat("Suma de los cuadrados de los residuos RSS =", round(RSS,5), "\n")
+
+```  
+
+Ahora se calcula el error residual estándar ($RSE$)
+$$RSE = \sqrt{\frac{RSS}{n-2}}$$
+
+```{r}
+#| code-fold: true
+
+RSE <- sqrt(RSS/(nrow(datos)-2))
+cat("Error residual estándar RSE =", round(RSE,5), "\n")
+```
+
+
+El error estándar del estimador de la pendiente $\hat{\beta_1}$ está dado por:
+$$SE(\hat{\beta_1}) = \frac{RSE}{\sqrt{\sum_{i=1}^n (x_i-\overline{x})^2}}$$
+
+```{r}
+#| code-fold: true
+
+SE_beta_1 <- RSE/sqrt((nrow(datos)-1)*var(datos$flipper_length_mm))
+cat("Error estándar del estimador de la pendiente SE(β1) =", round(SE_beta_1,5), "\n")
+```
+
+El error estándar del estimador de la ordenada al origen $\hat{\beta_0}$ está dado por:
+$$SE(\hat{\beta_0}) = RSE \sqrt{\frac{1}{n} + \frac{\overline{x}^2}{\sum_{i=1}^n (x_i-\overline{x})^2}}$$
+
+```{r}
+#| code-fold: true
+
+SE_beta_0 <- RSE*sqrt(1/nrow(datos) + (mean(datos$flipper_length_mm)^2)/((nrow(datos)-1)*var(datos$flipper_length_mm)))
+cat("Error estándar del estimador de la ordenada al origen SE(β0) =", round(SE_beta_0,5), "\n")
+```
+
+## Pruebas de hipótesis para los coeficientes
+
+Para el coeficiente de la pendiente $\beta_1$ se plantea la siguiente prueba de hipótesis:
+
+- Hipótesis nula $H_0: \beta_1 = 0$
+- Hipótesis alternativa $H_a: \beta_1 \neq 0$
+
+El estadístico de prueba está dado por:
+$$t = \frac{\hat{\beta_1} - 0}{SE(\hat{\beta_1})}$$ 
+
+```{r}
+#| code-fold: true
+
+t_beta_1 <- (beta_1 - 0)/SE_beta_1
+cat("Estadístico de prueba t para β1 =", round(t_beta_1,5), "\n")
+```
+
+El valor p asociado a la prueba se calcula con la distribución t de Student con $n-2$ grados de libertad:
+
+```{r}
+#| code-fold: true
+
+p_value_beta_1 <- 2*pt(-abs(t_beta_1), df = nrow(datos)-2)
+cat("Valor p para β1 =", p_value_beta_1, "\n")
+```
+
+Con estos valores calculamos el intervalo de confianza al 95% para $\beta_1$:
+$$\hat{\beta_1} \pm t_{n-2, 0.025} SE(\hat{\beta_1})$$
+
+```{r}
+#| code-fold: true
+
+t_critical_beta_1 <- qt(0.975, df = nrow(datos)-2)
+upper_beta_1 <- beta_1 + t_critical_beta_1*SE_beta_1
+lower_beta_1 <- beta_1 - t_critical_beta_1*SE_beta_1
+cat("Intervalo de confianza al 95% para β1: [", round(lower_beta_1,5), ", ", round(upper_beta_1,5), "]\n")
+```
+
+
+Similarmente, para el coeficiente de la ordenada al origen $\beta_0$ se plantea la siguiente prueba de hipótesis:
+
+- Hipótesis nula $H_0: \beta_0 = 0$
+- Hipótesis alternativa $H_a: \beta_0 \neq 0$
+
+El estadístico de prueba está dado por:
+$$t = \frac{\hat{\beta_0} - 0}{SE(\hat{\beta_0})}$$
+
+```{r}
+#| code-fold: true
+
+t_beta_0 <- (beta_0 - 0)/SE_beta_0
+cat("Estadístico de prueba t para β0 =", round(t_beta_0,5), "\n")
+```
+
+El valor p asociado a la prueba se calcula con la distribución t de Student con $n-2$ grados de libertad:
+
+```{r}
+#| code-fold: true
+
+p_value_beta_0 <- 2*pt(-abs(t_beta_0), df = nrow(datos)-2)
+cat("Valor p para β0 =", p_value_beta_0, "\n")
+```
+
+Con estos valores calculamos el intervalo de confianza al 95% para $\beta_0$:
+$$\hat{\beta_0} \pm t_{n-2, 0.025} SE(\hat{\beta_0})$$
+
+```{r}
+#| code-fold: true
+
+t_critical_beta_0 <- qt(0.975, df = nrow(datos)-2)
+upper_beta_0 <- beta_0 + t_critical_beta_0*SE_beta_0
+lower_beta_0 <- beta_0 - t_critical_beta_0*SE_beta_0
+cat("Intervalo de confianza al 95% para β0: [", round(lower_beta_0,5), ", ", round(upper_beta_0,5), "]\n")
+```
+
+## Evaluación del modelo
+
+Para evaluar el modelo de regresión lineal simple se utiliza el coeficiente de determinación $R^2$ que está dado por:
+$$R^2 = 1 - \frac{RSS}{TSS}$$
+donde $TSS$ es la suma total de los cuadrados, que se calcula como:
+$$TSS = \sum_{i=1}^n (y_i - \overline{y})^2$$
+
+```{r}
+#| code-fold: true
+
+TSS <- sum((datos$body_mass_g - mean(datos$body_mass_g))^2)
+R_squared <- 1 - RSS/TSS
+cat("Coeficiente de determinación R² =", round(R_squared,5), "\n")
+```
+
+El valor de $R^2$ indica la proporción de la variabilidad en la variable de respuesta que es explicada por el modelo de regresión lineal simple. Un valor cercano a 1 indica un buen ajuste del modelo, mientras que un valor cercano a 0 indica un mal ajuste.
+
+Con este valor calculamos el estadístico F para evaluar la significancia del modelo:
+$$F = \frac{(TSS - RSS)/p}{RSS/(n-p-1)}$$
+donde $p$ es el número de predictores en el modelo (en este caso, $p=1$).
+
+```{r}
+#| code-fold: true
+
+p <- 1
+F_statistic <- ((TSS - RSS)/p)/(RSS/(nrow(datos)-p-1))
+cat("Estadístico F para el modelo =", round(F_statistic,5), "\n")
+```
+
+El valor p asociado al estadístico F se calcula con la distribución F con $p$ y $n-p-1$ grados de libertad:
+
+```{r}
+#| code-fold: true
+
+p_value_F <- pf(F_statistic, df1 = p, df2 = nrow(datos)-p-1, lower.tail = FALSE)
+cat("Valor p para el estadístico F =", p_value_F, "\n")
+```
+Un valor p pequeño (por ejemplo, menor a 0.05) indica que al menos uno de los coeficientes del modelo es significativamente diferente de cero, lo que sugiere que el modelo tiene un poder predictivo significativo.
+
+
+
+## Utilizando las funciones de R
+
+```{r}
+#| code-fold: true
+
+lr_bm_fl <- lm(body_mass_g ~ flipper_length_mm, data = datos)
+summary(lr_bm_fl)
+```
+Intervalos de confianza para los coeficientes:
+
+```{r}
+#| code-fold: true
+
+confint(lr_bm_fl, level = 0.95)
+```
+
+# Diagnóstico del modelo
+
+```{r}
+#| code-fold: true
+
+par(mfrow = c(1,2))
+plot(lr_bm_fl)
+```
+
+
+
+# Regresión lineal múltiple
+
+Consideremos como variable de respuesta `body_mass_g` y como predictores a `flipper_length_mm` y `bill_length_mm`. Inicialmente se muestra el scatterplot en 3D.
+
+```{r webgl=TRUE}
+#| code-fold: true
+
+scatter3d(body_mass_g~ flipper_length_mm + bill_length_mm, data= datos, fit="linear", residuals=TRUE, bg="white", axis.scales=TRUE,  grid=TRUE, ellipsoid=FALSE)
+```
+
+Ahora estimaremos el modelo de regresión lineal múltiple de la forma
+$$y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + \epsilon_i$$
+donde $y_i$ es la masa corporal (`body_mass_g`), $x_{1i}$ es la longitud de aletas (`flipper_length_mm`), $x_{2i}$ es la longitud del pico (`bill_length_mm`), $\beta_0$ es la ordenada al origen, $\beta_1$ y $\beta_2$ son las pendientes asociadas a cada predictor y $\epsilon_i$ es el error aleatorio asociado a la observación $i$.
+
+```{r}
+#| code-fold: true
+
+lr_bm_fl_bl <- lm(body_mass_g ~ flipper_length_mm + bill_length_mm, data = datos)
+summary(lr_bm_fl_bl)
+```
+
+
+
+
+
+
+
+

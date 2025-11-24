@@ -1,0 +1,269 @@
+---
+title: "Pruebas Estadísticas"
+format: 
+  html:
+    grid: 
+      body-width: 1000px
+editor: visual
+---
+
+```{=html}
+<style>
+main.content {
+text-align: justify}
+</style>
+```
+
+
+```{r}
+#| code-fold: true
+#| label: load-packages
+#| warning: false
+#| message: false
+
+
+library(tidyverse)
+library(palmerpenguins)
+library(RColorBrewer)
+library(multcomp)
+```
+
+# Importar datos y filtrar casos completos.
+
+```{r}
+#| code-fold: true
+
+data("penguins")
+datos <- penguins
+datos <- datos[complete.cases(datos), ]
+glimpse(datos)
+```
+
+
+# ANOVA paso a paso para masa corporal
+
+Gráfica para la distribución de la masa corporal en cada especie. Se señala la media de cada especie, pues esta estadística la que se compara el ANOVA.
+
+```{r}
+#| code-fold: true
+#| fig-width: 8
+#| fig-height: 6
+#| fig-align: "center"
+
+# Se crea una tabla con el número de observaciones por especie y la media de la masa corporal por especie
+media_bm <- datos |> group_by(species) |> summarise(obs = n(), media_species = mean(body_mass_g)) |> ungroup()
+
+
+# Gráfica de caja con los outliers en color rojo, los puntos de la media en dorado y la línea discontinua de la media total
+ggplot(datos)+
+  geom_boxplot(aes(species, body_mass_g, fill = species), outlier.color = "firebrick")+
+  geom_jitter(aes(species, body_mass_g), alpha = 0.2)+
+  geom_point(data = media_bm, aes(species, media_species), color = "gold", size =2.5)+
+  geom_hline(yintercept = mean(datos$body_mass_g), linetype ="dashed", color="black")+
+  scale_fill_brewer(palette = "Dark2")+
+  labs(x= "Especies de pingüinos", y= "Masa corporal (g)")+
+  theme_bw()+
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(size=12),
+    axis.title.x = element_text(size=13),
+    axis.text.y = element_text(size=12),
+    axis.title.y = element_text(size=13)
+  )
+
+```
+
+Ahora calculamos las estadísticas.
+
+## Variación entre grupos $SS_B$
+
+La variación entre grupos está dada por 
+
+$$SS_B = \sum_{i=1}^{k} n_i (\overline{y}_i - \overline{y})^2$$
+
+donde $n_i$ es el número de observaciones en el grupo $i$, $\overline{y}_i$ es la media del grupo $i$ y $\overline{y}$ es la media total de todas las observaciones. En la tabla `media_bm` ya tenemos los valores de $n_i$ y $\overline{y}_i$, por lo que solo falta calcular el cuadrado de la diferencia de cada media con la media total, multiplicar por el número de observaciones en cada grupo (especie) y luego realizar la suma. 
+
+```{r}
+#| code-fold: true
+
+media_bm <- media_bm |> mutate(media_total = mean(datos$body_mass_g), ds_n = obs*(media_species -media_total)^2)
+
+SSB <- sum(media_bm$ds_n)
+
+cat("Variación entre los grupos SSB=", round(SSB,2))
+
+```
+
+## Variación en los grupo $SS_W$
+
+La variación dentro de los grupos está dada por
+
+$$SS_W = \sum_{i=1}^{k} \sum_{j=1}^{n_i} (y_{ij} - \overline{y}_i)^2$$
+
+donde $y_{ij}$ es la observación $j$ del grupo $i$ y $\overline{y}_i$ es la media del grupo $i$. Para calcular esta estadística, primero unimos las coulumnas `species` y `media_species` de la tabla `media_bm` con la tabla `datos`, para tener la media de cada especie en cada observación. Luego, calculamos la diferencia al cuadrado entre cada observación y la media de su grupo, y sumamos todas estas diferencias para obtener $SS_W$. 
+
+```{r}
+#| code-fold: true
+#| message: false
+
+datos <- left_join(datos, media_bm |> dplyr::select(species, media_species))
+datos <- datos |> mutate(dm_species = (body_mass_g- media_species)^2, dmtotal = (body_mass_g- mean(datos$body_mass_g))^2)
+
+SSW <- sum(datos$dm_species)
+cat("Variación en los grupos SSW= ", SSW, "\n")
+```
+
+## Variación total $SS$
+
+La variación total está dada por
+
+$$SS = \sum_{i=1}^{k} \sum_{j=1}^{n_i} (y_{ij} - \overline{y})^2$$
+
+donde $y_{ij}$ es la observación $j$ del grupo $i$ y $\overline{y}$ es la media total de todas las observaciones. A continuación se calculará esta variación y se verificará que cumple la igualdad
+
+$$SS = SS_B + SS_W$$
+
+El cuadrado de la diferencia entre cada observación y la media total ya se calculó en la columna `dmtotal` de la tabla `datos`, por lo que solo falta sumar todas estas diferencias para obtener $SS$. Se calcula también el valor teórico de $SS$ como la suma de $SS_B$ y $SS_W$.
+
+
+
+
+```{r}
+#| code-fold: true
+
+SS <- sum(datos$dmtotal)
+cat("Variación total (cálculo) SS= ", SS, "\n")
+
+SS_teorico <- SSB+SSW
+cat("Variación total (teórica) SS= ", SS_teorico, "\n")
+
+```
+
+
+## Estadística de prueba F y valor p
+
+La estadística de prueba F se calcula como
+$$F = \frac{SS_B/(k-1)}{SS_W/(n-k)}$$
+donde $k$ es el número de grupos y $n$ es el número total de observaciones. En este caso, $k=3$ (las tres especies de pingüinos) y $n$ es el número de filas en la tabla `datos`. Para este cálculo primero se encuentran el término del numerador $SS_B/(k-1)$ y el del denominador $SS_W/(n-k)$; y posteriormente el cociente de éstos.
+
+
+```{r}
+#| code-fold: true
+
+termino_numerador <- SSB/(3-1)
+termino_denominador <- SSW/(nrow(datos)-3)
+F_value <- (SSB/2)/(SSW/(nrow(datos)-3))
+
+cat("Término del numerador= ", termino_numerador, "\n")
+cat("Término del denominador= ", termino_denominador, "\n")
+cat("Valor de la estadística de prueba F= ", F_value, "\n")
+
+```
+
+La gráfica de la función de densidad de la variable aleatoria con distribución F con $df_1=2$ y $df_2=330$, se muestra a continuación, aunque el valor de la estadística de prueba F, está fuera del rango.
+
+```{r}
+#| code-fold: true
+#| fig-width: 6
+#| fig-height: 4
+#| fig-align: "center"
+
+
+ggplot()+
+  geom_function(fun = df, args = list(df1= 2, df2= nrow(datos)-3), xlim=c(0,20), color ="firebrick")+
+  theme_bw()
+
+```
+
+Y calculamos el respectivo valor p.
+
+```{r}
+#| code-fold: true
+
+valor_p <-  pf(F_value, df1=2, df2=nrow(datos)-3, lower.tail = FALSE)
+cat("Valor p= ", valor_p, "\n")
+```
+
+Como se había anticipado, el valor p es muy pequeño, por lo que se rechaza la hipótesis nula de igualdad de medias.
+
+# ANOVA para masa corporal con la función `aov`de R
+
+Ahora hacemos el ANOVA con la función que tiene R.
+
+
+```{r}
+#| code-fold: true
+
+body_mass_aov <- aov(body_mass_g ~ species, data =datos)
+body_mass_aov
+summary(body_mass_aov)
+```
+
+Observamos que los resultados coinciden con los cálculos manuales realizados anteriormente.
+
+
+# Prueba post hoc de Tukey de comparaciones múltiples
+
+Esta prueba permite identificar qué pares de medias son significativamente diferentes entre sí, después de haber encontrado una diferencia significativa en el ANOVA. Se utiliza la función `glht` del paquete `multcomp` para realizar la prueba de Tukey.
+
+
+```{r}
+#| code-fold: true
+
+body_mass_tukey <- glht(body_mass_aov, linfct = mcp(species = "Tukey"))
+summary(body_mass_tukey)
+```
+
+Los resultados muestran las diferencias entre cada par de especies, junto con los intervalos de confianza y los valores p ajustados. Si el valor p ajustado es menor que un nivel de significancia predefinido (por ejemplo, 0.05), se concluye que las medias de las dos especies son significativamente diferentes.
+
+```{r}
+#| code-fold: true
+#| fig-width: 8
+#| fig-height: 6
+
+margen <- par(oma = c(0, 5, 0, 0))
+
+plot(body_mass_tukey)
+```
+
+El gráfico muestra las diferencias de medias entre las especies con sus respectivos intervalos de confianza. Si el intervalo de confianza no cruza la línea vertical en cero, indica que hay una diferencia significativa entre las medias de las dos especies comparadas.
+
+
+A partir de la prueba de Tukey se pueden obtener etiquetas para los grupos de medias que no son significativamente diferentes entre sí. Estas etiquetas se pueden agregar a la gráfica de cajas para facilitar la interpretación visual de los resultados.
+
+```{r}
+#| code-fold: true
+#| message: false
+#| fig-width: 8
+#| fig-height: 6
+#| fig-align: "center"
+
+body_mass_tukey_labels <- cld(body_mass_tukey)
+body_mass_labels <- data.frame(species = names(body_mass_tukey_labels$mcletters$Letters),
+                                      labels = body_mass_tukey_labels$mcletters$Letters)
+resumen_body_mass <- datos |> group_by(species) |>
+  summarise(media = mean(body_mass_g), q_75 = quantile(body_mass_g, 0.75)) |>
+  ungroup()
+resumen_body_mass <- left_join(resumen_body_mass, body_mass_labels)
+
+ggplot(datos)+
+  geom_boxplot(aes(species, body_mass_g, fill = species), outlier.color = "firebrick")+
+  geom_point(data = resumen_body_mass, aes(species, media), color = "gold", size =2.5)+
+  geom_text(data = resumen_body_mass, aes(x= species, y= q_75, label= labels), size=6, vjust = -0.2, hjust = 1.5)+
+  scale_fill_brewer(palette = "Dark2")+
+  labs(x= "Especies de pingüinos", y= "Masa corporal (g)")+
+  theme_bw()+
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(size=12),
+    axis.title.x = element_text(size=13),
+    axis.text.y = element_text(size=12),
+    axis.title.y = element_text(size=13)
+  )
+
+
+
+```
+
+
+
