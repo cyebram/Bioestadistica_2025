@@ -1,0 +1,150 @@
+---
+title: "Análisis de Componentes Principales (PCA)"
+format: 
+  html:
+    grid: 
+      body-width: 1000px
+editor: visual
+---
+
+```{=html}
+<style>
+main.content {
+text-align: justify}
+</style>
+```
+
+```{r}
+#| label: load-packages
+#| warning: false
+#| message: false
+#| code-fold: true
+
+library(tidyverse)
+library(palmerpenguins)
+library(ggthemes)
+library(RColorBrewer)
+library(plotly)
+library(corrplot)
+library(kableExtra)
+library(multcomp)
+library(factoextra)
+library(FactoMineR)
+```
+
+## Preparación de datos
+
+Conservar observaciones completas de las variables numéricas.
+
+```{r}
+#| code-fold: true
+data("penguins")
+penguins_numeric_complete <- penguins |> dplyr::select(where(is.numeric), -year) |> complete.cases()
+penguins_complete <- penguins[penguins_numeric_complete, ]
+penguins_numeric <- penguins_complete |> dplyr::select(where(is.numeric), -year)
+
+```
+
+## Resultados
+
+::: panel-tabset
+### Eigenvalores y varianzas
+
+```{r}
+#| code-fold: true
+
+# datos_z <- scale(penguins_numeric) |> as_tibble()
+# 
+# coef_pc1 <- PC_total$rotation[ ,1]
+# 
+# datos_z <- datos_z |> mutate(PC1= bill_length_mm*coef_pc1[1] +
+#                              bill_depth_mm*coef_pc1[2]+
+#                                flipper_length_mm*coef_pc1[3]+
+#                                body_mass_g*coef_pc1[4]) 
+
+
+PC_total <- prcomp(penguins_numeric, scale.=TRUE, center=TRUE)
+
+eig_total <- get_eigenvalue(PC_total)
+eig_tabla <- data.frame(PC=paste0("PC",1:dim(eig_total)[1]), 
+                        Eigenvalor=round(eig_total$eigenvalue,3), 
+                        Varianza=round(eig_total$variance.percent,2), 
+                        Var_acu=round(eig_total$cumulative.variance.percent,2))
+
+kable(eig_tabla, align = "c", col.names = c("Componente", "Eigenvalor", "% varianza", "% varianza acumulada")) %>% kable_styling(c("striped", "hover"), full_width = F)%>% scroll_box(width="100%", height="300px", fixed_thead = TRUE)
+```
+
+### Scree plot
+
+```{r}
+#| code-fold: true
+fviz_eig(PC_total, addlabels = TRUE)
+```
+
+### Coeficientes (Loadings)
+
+```{r}
+#| code-fold: true
+PC_coef <-data.frame(PC_total$rotation)
+kable(PC_coef, align = "c") %>% kable_styling(c("striped", "hover"), full_width = F)%>% scroll_box(width="100%", height="300px", fixed_thead = TRUE)
+```
+
+### Contribución variables
+
+```{r}
+#| code-fold: true
+fviz_pca_var(PC_total, col.var = "contrib", gradient.cols=c("#1627dc", "#ffb600", "#ff2e16"))
+```
+
+### Contribución PC1
+
+```{r}
+#| code-fold: true
+fviz_contrib(PC_total, "var", axes = 1)
+```
+
+### Contribución PC2
+
+```{r}
+#| code-fold: true
+fviz_contrib(PC_total, "var", axes = 2)
+```
+:::
+
+## Proyecciones
+
+::: panel-tabset
+### Biplot
+
+```{r}
+#| code-fold: true
+fviz_pca_biplot(PC_total,
+                geom.ind = "point",
+                fill.ind = penguins_complete$species,
+                pointshape = 21 ,
+                pointsize = 2,
+                alpha.ind=0.6,
+                col.var = "black",
+                #palette= ,
+                label= "var",
+                repel = TRUE   
+  )
+```
+
+### Proyección
+
+```{r}
+#| code-fold: true
+proy_scores <- fviz_pca_ind(PC_total,
+             pointsize = 2,
+             habillage =penguins_complete$species,
+             #addEllipses = TRUE,
+             label= "var",
+            repel = TRUE 
+  )
+
+ggplotly(proy_scores)
+```
+:::
+
+

@@ -1,0 +1,232 @@
+---
+title: "Agrupamiento, Clustering"
+format: 
+  html:
+    grid: 
+      body-width: 1000px
+editor: visual
+---
+
+```{=html}
+<style>
+main.content {
+text-align: justify}
+</style>
+```
+
+```{r}
+#| label: load-packages
+#| warning: false
+#| message: false
+#| code-fold: true
+
+library(tidyverse)
+library(palmerpenguins)
+library(ggthemes)
+library(RColorBrewer)
+library(plotly)
+library(corrplot)
+library(kableExtra)
+library(multcomp)
+library(factoextra)
+library(FactoMineR)
+library(dendextend)
+library(igraph)
+library(cluster)
+library(NbClust)
+```
+
+## Preparación de datos
+
+Conservar observaciones completas de las variables numéricas.
+
+```{r}
+#| code-fold: true
+data("penguins")
+penguins_numeric_complete <- penguins |> dplyr::select(where(is.numeric), -year) |> complete.cases()
+penguins_complete <- penguins[penguins_numeric_complete, ]
+penguins_numeric <- penguins_complete |> dplyr::select(where(is.numeric), -year)
+
+```
+
+Se estandarizan los datos por columnas.
+
+```{r}
+sd.data <- scale(penguins_numeric)
+row.names(sd.data) <- paste("ID", 1:nrow(sd.data), sep="_")
+```
+
+# Distancias
+
+A continuación se muestra una representación gráfica de las matrices de distancias utilizando diferentes métricas:
+
+::: panel-tabset
+## Euclidiana
+
+```{r}
+#| code-fold: true
+#| warning: false
+
+dist.eucl <- dist(sd.data)
+dist.eucl_matrix <- as.matrix(dist.eucl)
+dist.eucl_plot <- fviz_dist(dist.eucl, lab_size = 6)
+ggplotly(dist.eucl_plot)
+
+```
+
+## Correlación de Pearson
+
+En esta caso utilizamos la función `get_dist()` del package `factoextra`.
+
+```{r}
+#| code-fold: true
+#| warning: false
+
+dist.pearson <- get_dist(sd.data, method = "pearson")
+dist.pearson_plot <- fviz_dist(dist.pearson, lab_size = 6)
+ggplotly(dist.pearson_plot)
+```
+:::
+
+# Agrupamiento jerárquico
+
+Llevamos a cabo el agrupamiento jerárquico utilizando la matriz de distancias Euclidianas. Se muestran los dendrogramas utilizando diferentes métodos de enlace.
+
+## Distancia Euclidiana
+
+::: panel-tabset
+### Completo
+
+```{r}
+#| code-fold: true
+#| warning: false
+
+euc_comp_hc <- hclust(dist.eucl, method = "complete")
+fviz_dend(euc_comp_hc, k=5, cex=0.5, k_colors = "jco", rect=TRUE, rect_border= "jco", rect_fill = TRUE, labels_track_height=1)
+
+```
+
+En este caso, al considerar 5 grupos, *cortamos* el árbol, identificamos cuántas observaciones hay en cada cluster y por ejemplo, mostramos los elementos del grupo 5.
+
+```{r}
+#| code-fold: true
+
+grp_euc_complete <- cutree(euc_comp_hc, k=5)
+table(grp_euc_complete)
+rownames(sd.data)[grp_euc_complete == 5]
+```
+
+Utilizando la función `fviz_cluster()` podemos visualizar el resultado por medio de un scatterplot. Las observaciones son representadas en el plano usando componentes principales.
+
+```{r}
+#| code-fold: true
+
+fviz_cluster(list(data= sd.data, cluster= grp_euc_complete),
+             palette = "jco", ellipse.type = "convex", repel = TRUE, show.clust.cent = FALSE, ggtheme = theme_bw())
+```
+
+### Single
+
+```{r}
+#| code-fold: true
+#| warning: false
+
+euc_single_hc <- hclust(dist.eucl, method = "single")
+fviz_dend(euc_single_hc, k=5, cex=0.5, k_colors = "jco", rect=TRUE, rect_border= "jco", rect_fill = TRUE, labels_track_height=0.1)
+```
+
+Se proyecta en el subespacio generado por las dos primeras componentes principales:
+
+```{r}
+#| code-fold: true
+
+grp_euc_single <- cutree(euc_single_hc, k=5)
+fviz_cluster(list(data= sd.data, cluster= grp_euc_single),
+             palette = "jco", ellipse.type = "convex", repel = TRUE, show.clust.cent = FALSE, ggtheme = theme_bw())
+```
+
+### Average
+
+```{r}
+#| code-fold: true
+#| warning: false
+
+euc_ave_hc <- hclust(dist.eucl, method = "average")
+fviz_dend(euc_ave_hc, k=5, cex=0.5, k_colors = "jco", rect=TRUE, rect_border= "jco", rect_fill = TRUE, labels_track_height=0.25)
+```
+
+### Ward.D
+
+```{r}
+#| code-fold: true
+#| warning: false
+
+euc_ward_hc <- hclust(dist.eucl, method = "ward.D")
+fviz_dend(euc_ward_hc, k=5, cex=0.5, k_colors = "jco", rect=TRUE, rect_border= "jco", rect_fill = TRUE, labels_track_height=0.25)
+```
+
+Se proyecta en el subespacio generado por las dos primeras componentes principales:
+
+```{r}
+#| code-fold: true
+
+grp_euc_ward <- cutree(euc_ward_hc, k=5)
+fviz_cluster(list(data= sd.data, cluster= grp_euc_ward),
+             palette = "jco", ellipse.type = "convex", repel = TRUE, show.clust.cent = FALSE, ggtheme = theme_bw())
+```
+
+### Ward.D2
+
+```{r}
+#| code-fold: true
+#| warning: false
+
+euc_ward2_hc <- hclust(dist.eucl, method = "ward.D2")
+fviz_dend(euc_ward2_hc, k=5, cex=0.5, k_colors = "jco", rect=TRUE, rect_border= "jco", rect_fill = TRUE, labels_track_height=0.25)
+```
+
+Se proyecta en el subespacio generado por las dos primeras componentes principales:
+
+```{r}
+#| code-fold: true
+
+grp_euc_ward2 <- cutree(euc_ward2_hc, k=5)
+fviz_cluster(list(data= sd.data, cluster= grp_euc_ward2),
+             palette = "jco", ellipse.type = "convex", repel = TRUE, show.clust.cent = FALSE, ggtheme = theme_bw())
+```
+:::
+
+# K-medias
+
+Estimación del número óptimo de clusters.
+
+::: panel-tabset
+## WSS
+
+```{r}
+#| code-fold: true
+
+fviz_nbclust(sd.data, kmeans, method= "wss")
+
+```
+
+## Silhouette
+
+```{r}
+#| code-fold: true
+
+fviz_nbclust(sd.data, kmeans, method="silhouette")
+
+```
+:::
+
+Se lleva a cabo el agrupamiento de K-medias con K=3.
+
+```{r}
+#| code-fold: true
+
+km.3 <- kmeans(sd.data, 3, nstart = 25)
+fviz_cluster(km.3, data = sd.data, palette= "jco", ellipse.type = "euclid", star.plot=TRUE, ggtheme=theme_bw())
+
+
+```
